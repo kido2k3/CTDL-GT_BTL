@@ -1,11 +1,16 @@
 // C++(STL) program for Huffman Coding with STL
 #include <bits/stdc++.h>
+#include "main.h"
 using namespace std;
 #define REG "REG"
 #define CLE "CLE"
 #define PrintHT "PrintHT"
 #define PrintAVL "PrintAVL"
 #define PrintMH "PrintMH"
+class Restaurant
+{
+    bool id[MAXSIZE + 1];
+};
 class HuffmanTree
 {
 private:
@@ -88,7 +93,7 @@ private:
         bool operator()(Node *l, Node *r)
         {
             if (l->freq == r->freq)
-                return l->data > r->data;
+                return l->data >= r->data;
             return (l->freq > r->freq);
         }
     };
@@ -144,15 +149,25 @@ int main()
     if (filein.is_open())
     {
         string line = "";
-        string ins = "";
-        int num = 0;
-        string name = "";
+
         while (getline(filein, line))
         {
+            string ins = "";
+            int num = 0;
+            string name = "";
             if (CheckIns(line, ins, name, num))
             {
                 if (ins == REG)
                 {
+                    map<char, int> m1;
+                    map<char, string> m2;
+                    for (char i : name)
+                    {
+                        m1[i]++;
+                    }
+                    HuffmanTree ht;
+                    ht.BuildTree(m1, m2);
+                    PrintMap<char, string>(m2);
                 }
                 else if (ins == CLE)
                 {
