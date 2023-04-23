@@ -1,7 +1,11 @@
 // C++(STL) program for Huffman Coding with STL
 #include <bits/stdc++.h>
 using namespace std;
-
+#define REG "REG"
+#define CLE "CLE"
+#define PrintHT "PrintHT"
+#define PrintAVL "PrintAVL"
+#define PrintMH "PrintMH"
 class HuffmanTree
 {
 private:
@@ -89,7 +93,43 @@ private:
         }
     };
 };
-
+bool CheckIns(const string &line, string &ins, string &name, int &num)
+{
+    int CountSpace = 0;
+    int i = line.find(' ');
+    int FirstSpace = i;
+    while (i != -1)
+    {
+        CountSpace++;
+        i = line.find(' ', i + 1);
+    }
+    if (CountSpace > 1)
+        return 0;
+    if (!CountSpace)
+    { // count space = 0
+        if (line == PrintAVL || line == PrintHT || line == PrintMH)
+        {
+            ins = line;
+            return 1;
+        }
+        return 0;
+    }
+    // count space = 1
+    ins = line.substr(0, FirstSpace);
+    if (ins == REG)
+    {
+        name = line.substr(FirstSpace + 1);
+        // have not checked name yet
+        //
+        return 1;
+    }
+    else if (ins == CLE)
+    {
+        num = stoi(line.substr(FirstSpace + 1));
+        return 1;
+    }
+    return 0;
+}
 // Test func
 template <typename T1, typename T2>
 void PrintMap(const map<T1, T2> &m)
@@ -99,14 +139,38 @@ void PrintMap(const map<T1, T2> &m)
 }
 int main()
 {
-    map<char, int> st;
-    map<char, string> m;
-    // string str = "huahoangnhat";
-    string str = "huynhvutanphat";
-    for (int i = 0; i < str.size(); i++)
-        st[str[i]]++;
-    HuffmanTree h;
-    h.BuildTree(st, m);
-    PrintMap<char, string>(m);
+    string filename = "test.txt";
+    ifstream filein(filename, ios::in);
+    if (filein.is_open())
+    {
+        string line = "";
+        string ins = "";
+        int num = 0;
+        string name = "";
+        while (getline(filein, line))
+        {
+            if (CheckIns(line, ins, name, num))
+            {
+                if (ins == REG)
+                {
+                }
+                else if (ins == CLE)
+                {
+                }
+                else if (ins == PrintAVL)
+                {
+                }
+                else if (ins == PrintHT)
+                {
+                }
+                else if (ins == PrintMH)
+                {
+                }
+            }
+        }
+        filein.close();
+    }
+    else
+        cout << "Open fail\n";
     return 0;
 }
