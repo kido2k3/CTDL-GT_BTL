@@ -7,9 +7,50 @@ using namespace std;
 #define PrintHT "PrintHT"
 #define PrintAVL "PrintAVL"
 #define PrintMH "PrintMH"
+
 class Restaurant
 {
-    bool id[MAXSIZE + 1];
+private:
+    class Table;
+    Table *table;
+    int count1;      // count 1st area
+    int count2;      // count 2nd area
+    long long order; // numerical order of guests getting in restaurant
+    queue<Table *> FIFO;
+    stack<Table *> LRCO;
+    class Table
+    {
+    public:
+        bool IsEmpty;
+        string name;
+        long long order;
+        int result;
+        Table()
+        {
+            order = 0;
+            IsEmpty = 1;
+            name = "";
+            result = 0;
+        }
+        Table(bool IsEmpty, string name, long long order, int result) : IsEmpty(IsEmpty), name(name), order(order), result(result) {}
+        ~Table() {}
+    };
+
+public:
+    Restaurant()
+    {
+        table = new Table[MAXSIZE];
+        count1 = 0;
+        count2 = 0;
+        order = 0;
+    }
+    ~Restaurant() {}
+    bool IsTableEmpty(int id)
+    {
+        if (id >= 1 && id <= MAXSIZE)
+            return table[id].IsEmpty;
+        return 0;
+    }
 };
 class HuffmanTree
 {
@@ -98,6 +139,7 @@ private:
         }
     };
 };
+
 bool CheckIns(const string &line, string &ins, string &name, int &num)
 {
     int CountSpace = 0;
@@ -135,6 +177,29 @@ bool CheckIns(const string &line, string &ins, string &name, int &num)
     }
     return 0;
 }
+int EncryptingName(const string &name, map<char, string> &m2)
+{
+    string s;
+    for (unsigned i = name.size() - 1; i >= 0; i--)
+    {
+        s = m2[name[i]] + s;
+        if (s.size() >= 15)
+            break;
+    }
+    if (s.size() > 15)
+    {
+        return stoi(s.substr(s.size() - 15, 15), 0, 2);
+    }
+    else
+        return stoi(s, 0, 2);
+}
+bool IsGuestInRestaurant(const Restaurant &r, const string &name, unordered_map<string, int> &EncryptedName)
+{
+    for (int i = 1; i <= MAXSIZE; i++)
+    {
+        if ()
+    }
+}
 // Test func
 template <typename T1, typename T2>
 void PrintMap(const map<T1, T2> &m)
@@ -142,14 +207,14 @@ void PrintMap(const map<T1, T2> &m)
     for (auto it = m.begin(); it != m.end(); it++)
         cout << it->first << ": " << it->second << endl;
 }
-int main()
+void simulate(string filename)
 {
-    string filename = "test.txt";
     ifstream filein(filename, ios::in);
     if (filein.is_open())
     {
+        Restaurant r;
         string line = "";
-
+        unordered_map<string, int> EncryptedName; // consist of name already transformed into number
         while (getline(filein, line))
         {
             string ins = "";
@@ -159,15 +224,26 @@ int main()
             {
                 if (ins == REG)
                 {
-                    map<char, int> m1;
-                    map<char, string> m2;
-                    for (char i : name)
+                    if (EncryptedName.find(name) == EncryptedName.end())
                     {
-                        m1[i]++;
+                        if (name.size() == 1)
+                        {
+                            EncryptedName[name] = 1;
+                        }
+                        else
+                        {
+                            map<char, int> m1;
+                            map<char, string> m2;
+                            for (char i : name)
+                            {
+                                m1[i]++; // create map with key (charater), data (frequency)
+                            }
+                            HuffmanTree ht;
+                            ht.BuildTree(m1, m2);
+                            int result = EncryptingName(name, m2);
+                            EncryptedName[name] = result;
+                        }
                     }
-                    HuffmanTree ht;
-                    ht.BuildTree(m1, m2);
-                    PrintMap<char, string>(m2);
                 }
                 else if (ins == CLE)
                 {
@@ -187,5 +263,10 @@ int main()
     }
     else
         cout << "Open fail\n";
+}
+int main(int argc, char *argv[])
+{
+    string fileName = "test.txt";
+    simulate(fileName);
     return 0;
 }
