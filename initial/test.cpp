@@ -17,25 +17,26 @@ private:
     int count2;      // count 2nd area
     long long order; // numerical order of guests getting in restaurant
     map<int, Table *> area1;
-
     queue<Table *> FIFO;
     stack<Table *> LRCO;
+
     class Table
     {
     public:
         bool IsEmpty;
         string name;
-        long long order;
+        long long order; // numerical order of guests getting in restaurant
         int result;
-        bool SameResult;
-        int num;
+        int num;  // number of times to order dish
+        int area; // 0: inialize, delete; 1: area1, 2: area2
         Table()
         {
             order = 0;
             IsEmpty = 1;
             name = "";
             result = 0;
-            SameResult = 0;
+            num = 0;
+            area = 0;
         }
         ~Table() {}
     };
@@ -61,16 +62,43 @@ public:
         {
             if (table[id].result != result)
                 return 0;
-            if (!table[id].SameResult)
-                return 1;
-            if (table[id].name == name)
-                return 1;
-            return 0;
+            if (table[id].name != name)
+                return 0;
+            return 1;
         }
         return 0;
     }
-    void InsertGuest(const int &id, const int &result, const string &name)
+    int InsertGuest(const int &result, const string &name)
     {
+        if (count1 + count2 == MAXSIZE)
+        {
+        }
+        else
+        {
+            int id = result % MAXSIZE + 1;
+            while (!table[id].IsEmpty)
+            {
+                id++;
+                if (id > MAXSIZE)
+                    id = 1;
+            }
+            table[id].IsEmpty = 0;
+            table[id].name = name;
+            table[id].order = order;
+            order++;
+            table[id].result = result;
+            table[id].num = 1;
+            /*bool IsEmpty;
+            string name;
+            long long order;
+            int result;
+            int num;*/
+            Table *temp = &table[id];
+            int ii = temp - table;
+            FIFO.push(temp);
+            return id;
+        }
+        return 0;
     }
 };
 class HuffmanTree
@@ -243,6 +271,7 @@ void simulate(string filename)
         Restaurant r;
         string line = "";
         // consist of name already transformed into number
+        // string: name
         // first int: result, second int: id
         unordered_map<string, pair<int, int>> EncryptedName;
         while (getline(filein, line))
@@ -279,6 +308,8 @@ void simulate(string filename)
                     }
                     else
                     {
+                        int id = r.InsertGuest(EncryptedName[name].first, name); // return id
+                        EncryptedName[name].second = id;
                     }
                 }
                 else if (ins == CLE)
