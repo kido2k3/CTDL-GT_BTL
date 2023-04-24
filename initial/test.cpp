@@ -16,6 +16,8 @@ private:
     int count1;      // count 1st area
     int count2;      // count 2nd area
     long long order; // numerical order of guests getting in restaurant
+    map<int, Table *> area1;
+
     queue<Table *> FIFO;
     stack<Table *> LRCO;
     class Table
@@ -25,14 +27,16 @@ private:
         string name;
         long long order;
         int result;
+        bool SameResult;
+        int num;
         Table()
         {
             order = 0;
             IsEmpty = 1;
             name = "";
             result = 0;
+            SameResult = 0;
         }
-        Table(bool IsEmpty, string name, long long order, int result) : IsEmpty(IsEmpty), name(name), order(order), result(result) {}
         ~Table() {}
     };
 
@@ -45,11 +49,28 @@ public:
         order = 0;
     }
     ~Restaurant() {}
-    bool IsTableEmpty(int id)
+    bool IsTableEmpty(const int &id)
     {
         if (id >= 1 && id <= MAXSIZE)
             return table[id].IsEmpty;
         return 0;
+    }
+    bool IsContainingGuest(const int &id, const int &result, const string &name)
+    {
+        if (id >= 1 && id <= MAXSIZE)
+        {
+            if (table[id].result != result)
+                return 0;
+            if (!table[id].SameResult)
+                return 1;
+            if (table[id].name == name)
+                return 1;
+            return 0;
+        }
+        return 0;
+    }
+    void InsertGuest(const int &id, const int &result, const string &name)
+    {
     }
 };
 class HuffmanTree
@@ -193,12 +214,19 @@ int EncryptingName(const string &name, map<char, string> &m2)
     else
         return stoi(s, 0, 2);
 }
-bool IsGuestInRestaurant(const Restaurant &r, const string &name, unordered_map<string, int> &EncryptedName)
+bool IsGuestInRestaurant(Restaurant &r, const string &name, unordered_map<string, pair<int, int>> &EncryptedName)
 {
     for (int i = 1; i <= MAXSIZE; i++)
     {
-        if ()
+        if (!r.IsTableEmpty(i))
+        {
+            if (r.IsContainingGuest(i, EncryptedName[name].first, name))
+            {
+                return 1;
+            }
+        }
     }
+    return 0;
 }
 // Test func
 template <typename T1, typename T2>
@@ -214,7 +242,9 @@ void simulate(string filename)
     {
         Restaurant r;
         string line = "";
-        unordered_map<string, int> EncryptedName; // consist of name already transformed into number
+        // consist of name already transformed into number
+        // first int: result, second int: id
+        unordered_map<string, pair<int, int>> EncryptedName;
         while (getline(filein, line))
         {
             string ins = "";
@@ -228,7 +258,7 @@ void simulate(string filename)
                     {
                         if (name.size() == 1)
                         {
-                            EncryptedName[name] = 1;
+                            EncryptedName[name].first = 1;
                         }
                         else
                         {
@@ -241,8 +271,14 @@ void simulate(string filename)
                             HuffmanTree ht;
                             ht.BuildTree(m1, m2);
                             int result = EncryptingName(name, m2);
-                            EncryptedName[name] = result;
+                            EncryptedName[name].first = result;
                         }
+                    }
+                    if (IsGuestInRestaurant(r, name, EncryptedName))
+                    {
+                    }
+                    else
+                    {
                     }
                 }
                 else if (ins == CLE)
