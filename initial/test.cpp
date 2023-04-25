@@ -40,6 +40,36 @@ private:
         }
         ~Table() {}
     };
+    void InsertIntoArea2(int id)
+    {
+        if (count2 == MAXSIZE / 2)
+        {
+            InsertIntoArea1(id);
+        }
+        else
+        {
+        }
+    }
+    void InsertIntoArea1(int id)
+    {
+        if (count1 == MAXSIZE / 2)
+        {
+            InsertIntoArea2(id);
+        }
+        else
+        {
+            int h_func = table[id].result % (MAXSIZE / 2);
+            int i = 0;
+            while (area1.find((h_func + i) % (MAXSIZE / 2)) != area1.end())
+            {
+                i++;
+            }
+            table[id].area = 1;
+            Table *temp = &table[id];
+            area1[(h_func + i) % (MAXSIZE / 2)] = temp;
+            count1++;
+        }
+    }
 
 public:
     Restaurant()
@@ -88,14 +118,17 @@ public:
             order++;
             table[id].result = result;
             table[id].num = 1;
-            /*bool IsEmpty;
-            string name;
-            long long order;
-            int result;
-            int num;*/
             Table *temp = &table[id];
-            int ii = temp - table;
             FIFO.push(temp);
+            if (result & 1)
+            {
+                // result is odd --> area 1
+                InsertIntoArea1(id);
+            }
+            else
+            {
+                InsertIntoArea2(id);
+            }
             return id;
         }
         return 0;
