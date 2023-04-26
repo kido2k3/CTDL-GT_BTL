@@ -7,19 +7,12 @@ using namespace std;
 #define PrintHT "PrintHT"
 #define PrintAVL "PrintAVL"
 #define PrintMH "PrintMH"
-
+#define RH -1
+#define EH 0
+#define LH 1
 class Restaurant
 {
 private:
-    class Table;
-    Table *table;
-    int count1;      // count 1st area
-    int count2;      // count 2nd area
-    long long order; // numerical order of guests getting in restaurant
-    map<int, Table *> area1;
-    queue<Table *> FIFO;
-    stack<Table *> LRCO;
-
     class Table
     {
     public:
@@ -29,17 +22,398 @@ private:
         int result;
         int num;  // number of times to order dish
         int area; // 0: inialize, delete; 1: area1, 2: area2
-        Table()
+        Table(bool IsEmpty = 1, string name = "", long long order = 0, int result = 0, int num = 0, int area = 0)
         {
-            order = 0;
-            IsEmpty = 1;
-            name = "";
-            result = 0;
-            num = 0;
-            area = 0;
+            this->IsEmpty = IsEmpty;
+            this->name = name;
+            this->order = order;
+            this->result = result;
+            this->num = num;
+            this->area = area;
         }
         ~Table() {}
+    } table[MAXSIZE];
+    class AVLtree
+    {
+    private:
+        class node;
+        node *root;
+        class node
+        {
+        public:
+            Table *table;
+            int Balance; // {RH, EH, LH}
+            node *left;
+            node *right;
+            node(Table *table = 0, int Balance = EH, node *left = 0, node *right = 0)
+            {
+                this->table = table;
+                this->left = left;
+                this->right = right;
+                this->Balance = Balance;
+            }
+        };
+        node *RotateRight(node *&root)
+        {
+            node *temp = root->left;
+            root->left = temp->right;
+            temp->right = root;
+            return temp;
+        }
+        node *RotateLeft(node *&root)
+        {
+            node *temp = root->right;
+            root->right = temp->left;
+            temp->left = root;
+            return temp;
+        }
+        node *LeftBalance(node *&root, bool &taller)
+        {
+            node *left = root->left;
+            if (left->Balance == LH)
+            {
+                // left of left
+                root->Balance = EH;
+                left->Balance = EH;
+                root = RotateRight(root);
+                taller = 0;
+            }
+            else
+            {
+                // right of left
+                node *RightOfLeft = left->right;
+                if (!RightOfLeft->Balance)
+                {
+                    root->Balance = EH;
+                    left->Balance = EH;
+                }
+                else if (RightOfLeft->Balance == RH)
+                {
+                    root->Balance = EH;
+                    left->Balance = LH;
+                }
+                else
+                {
+                    root->Balance = RH;
+                    left->Balance = EH;
+                }
+                RightOfLeft = EH;
+                root->left = RotateLeft(root->left);
+                root = RotateRight(root);
+            }
+            return root;
+        }
+        node *RightBalance(node *root, bool &taller)
+        {
+            node *right = root->right;
+            if (right->Balance == RH)
+            {
+                // right of right
+                root->Balance = EH;
+                right->Balance = EH;
+                root = RotateLeft(root);
+                taller = 0;
+            }
+            else
+            {
+                // left of right
+                node *LeftOfRight = right->left;
+                if (LeftOfRight->Balance == LH)
+                {
+                    root->Balance = EH;
+                    right->Balance = RH;
+                }
+                else if (!LeftOfRight)
+                {
+                    root->Balance = EH;
+                    right->Balance = EH;
+                }
+                else
+                {
+                    root->Balance = LH;
+                    right->Balance = EH;
+                }
+                LeftOfRight->Balance = EH;
+                root->right = RotateRight(right);
+                root = RotateLeft(root);
+                taller = 0;
+            }
+            return root;
+        }
+        node *insert(node *root, Table *t, bool &taller)
+        {
+            if (!root)
+            {
+                taller = 1;
+                return new node(t);
+            }
+            if (root->table->result < t->result)
+            {
+                root->left = insert(root->left, t, taller);
+                if (taller)
+                {
+                    // left sub tree is taller
+                    if (root->Balance == LH)
+                    {
+                        root = LeftBalance(root, taller);
+                    }
+                    else if (!root->Balance)
+                    {
+                        root->Balance = LH;
+                    }
+                    else
+                    {
+                        root->Balance = EH;
+                        taller = 0;
+                    }
+                }
+            }
+            else
+            {
+                root->right = insert(root->right, t, taller);
+                if (taller)
+                {
+                    // right subtree is taller
+                    if (root->Balance == LH)
+                    {
+                        taller = 0;
+                        root->Balance = EH;
+                    }
+                    else if (!root->Balance)
+                    {
+                        root->Balance = RH;
+                    }
+                    else
+                    {
+                        root = RightBalance(root, taller);
+                    }
+                }
+            }
+            return root;
+        }
+
+        node *DeleteRightBalance(node *root, bool &isShorter)
+        {
+            if (root->Balance == LH)
+            {
+                root->Balance = EH;
+            }
+            else if (!root->Balance)
+            {
+                isShorter = 0;
+                root->Balance = RH;
+            }
+            else
+            {
+                node *right = root->right;
+                if (right->Balance == LH)
+                {
+                    node *LeftOfRight = right->left;
+                    if (LeftOfRight->Balance == LH)
+                    {
+                        right->Balance = RH;
+                        root->Balance = EH;
+                    }
+                    else if (!LeftOfRight)
+                    {
+                        right->Balance = EH;
+                        root->Balance = EH;
+                    }
+                    else
+                    {
+                        root->Balance = LH;
+                        right->Balance = EH;
+                    }
+                    LeftOfRight->Balance = EH;
+                    root->right = RotateRight(right);
+                    root = RotateLeft(root);
+                }
+                else
+                {
+                    if (!right->Balance)
+                    {
+                        root->Balance = RH;
+                        right->Balance = LH;
+                        isShorter = 0;
+                    }
+                    else
+                    {
+                        root->Balance = EH;
+                        right->Balance = EH;
+                    }
+                    root = RotateLeft(root);
+                }
+            }
+            return root;
+        }
+        node *DeleteLeftBalance(node *root, bool &isShorter)
+        {
+            if (root->Balance == RH)
+            {
+                root->Balance = EH;
+            }
+            else if (!root->Balance)
+            {
+                isShorter = 0;
+                root->Balance = LH;
+            }
+            else
+            {
+                node *left = root->left;
+                if (left->Balance == RH)
+                {
+                    node *RightOfLeft = left->right;
+                    if (RightOfLeft->Balance == RH)
+                    {
+                        left->Balance = LH;
+                        root->Balance = EH;
+                    }
+                    else if (!RightOfLeft)
+                    {
+                        left->Balance = EH;
+                        root->Balance = EH;
+                    }
+                    else
+                    {
+                        root->Balance = RH;
+                        left->Balance = EH;
+                    }
+                    RightOfLeft->Balance = EH;
+                    root->left = RotateLeft(left);
+                    root = RotateRight(root);
+                }
+                else
+                {
+                    if (!left->Balance)
+                    {
+                        root->Balance = LH;
+                        left->Balance = RH;
+                        isShorter = 0;
+                    }
+                    else
+                    {
+                        root->Balance = EH;
+                        left->Balance = EH;
+                    }
+                    root = RotateRight(root);
+                }
+            }
+            return root;
+        }
+        node *remove(node *root, Table *t, bool &isSuccessful, bool &isShorter)
+        {
+            if (!root)
+            {
+                isSuccessful = 0;
+                isShorter = 0;
+                return 0;
+            }
+            if (root->table->result > t->result)
+            {
+                root->left = remove(root->left, t, isSuccessful, isShorter);
+                if (isShorter)
+                {
+                    root = DeleteRightBalance(root, isShorter);
+                }
+            }
+            else if (root->table->result < t->result)
+            {
+                root->right = remove(root->right, t, isSuccessful, isShorter);
+                if (isShorter)
+                {
+                    root = DeleteLeftBalance(root, isShorter);
+                }
+            }
+            else
+            {
+                if (root->table == t)
+                {
+                    if (!root->right)
+                    {
+                        node *temp = root->left;
+                        isSuccessful = 1;
+                        isShorter = 1;
+                        delete root;
+                        return temp;
+                    }
+                    else if (!root->left)
+                    {
+                        node *temp = root->right;
+                        isSuccessful = 1;
+                        isShorter = 1;
+                        delete root;
+                        return temp;
+                    }
+                    else
+                    {
+                        node *temp = root->right;
+                        while (temp->left)
+                            temp = temp->left;
+                        root->table = temp->table;
+                        root->right = remove(root->right, temp->table, isSuccessful, isShorter);
+                        if (isShorter)
+                        {
+                            root = DeleteLeftBalance(root, isShorter);
+                        }
+                    }
+                }
+                else
+                {
+                    root->right = remove(root->right, t, isSuccessful, isShorter);
+                    if (isShorter)
+                    {
+                        root = DeleteLeftBalance(root, isShorter);
+                    }
+                    if (!isSuccessful)
+                    {
+                        root->left = remove(root->left, t, isSuccessful, isShorter);
+                        if (isShorter)
+                        {
+                            root = DeleteRightBalance(root, isShorter);
+                        }
+                    }
+                }
+            }
+            return root;
+        }
+        void destruct(node *root)
+        {
+            if (!root)
+                return;
+            destruct(root->left);
+            destruct(root->right);
+            delete root;
+        }
+
+    public:
+        AVLtree()
+        {
+            root = 0;
+        }
+        ~AVLtree()
+        {
+            destruct(root);
+        }
+        void insert(Table *t)
+        {
+            bool taller = 0;
+            this->root = insert(this->root, t, taller);
+        }
+        void remove(Table *t)
+        {
+            bool isSuccessful = 0;
+            bool isShorter = 0;
+            this->root = remove(this->root, t, isSuccessful, isShorter);
+        }
     };
+    int count1;      // count 1st area
+    int count2;      // count 2nd area
+    long long order; // numerical order of guests getting in restaurant
+    map<int, Table *> area1;
+    AVLtree area2;
+    queue<Table *> FIFO;
+    deque<Table *> LRCO;
+
     void InsertIntoArea2(int id)
     {
         if (count2 == MAXSIZE / 2)
@@ -48,6 +422,10 @@ private:
         }
         else
         {
+            table[id].area = 2;
+            count2++;
+            Table *temp = &table[id];
+            area2.insert(temp);
         }
     }
     void InsertIntoArea1(int id)
@@ -74,7 +452,6 @@ private:
 public:
     Restaurant()
     {
-        table = new Table[MAXSIZE];
         count1 = 0;
         count2 = 0;
         order = 0;
@@ -262,7 +639,7 @@ bool CheckIns(const string &line, string &ins, string &name, int &num)
 int EncryptingName(const string &name, map<char, string> &m2)
 {
     string s;
-    for (unsigned i = name.size() - 1; i >= 0; i--)
+    for (int i = int(name.size()) - 1; i >= 0; i--)
     {
         s = m2[name[i]] + s;
         if (s.size() >= 15)
