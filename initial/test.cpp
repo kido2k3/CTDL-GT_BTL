@@ -32,7 +32,7 @@ private:
             this->area = area;
         }
         ~Table() {}
-    } table[MAXSIZE];
+    };
     class AVLtree
     {
     private:
@@ -406,14 +406,112 @@ private:
             this->root = remove(this->root, t, isSuccessful, isShorter);
         }
     };
+    class MinHeap
+    {
+    protected:
+        Table *elements[MAXSIZE];
+        int cnt;
+        inline bool a_less_than_b(const int &a, const int &b)
+        {
+            return elements[a]->num < elements[b]->num || elements[a]->num == elements[b]->num && elements[a]->order < elements[b]->order;
+        }
+        friend class Restaurant;
+
+    public:
+        void remove(const int &position)
+        {
+            if (cnt == 0)
+                return;
+            elements[position] = elements[cnt - 1];
+            cnt--;
+            ReHeapDown(position);
+            ReHeapUp(position);
+        }
+        int find(Table *&t)
+        {
+            for (int i = 0; i < cnt; i++)
+            {
+                if (t == elements[i])
+                    return i;
+            }
+            return -1;
+        }
+        void ReHeapUp(const int &position)
+        {
+            if (position >= cnt)
+                return;
+            if (position > 0)
+            {
+                int parent = (position - 1) / 2;
+                if (a_less_than_b(position, parent))
+                {
+                    swap(elements[position], elements[parent]);
+                    ReHeapUp(parent);
+                }
+            }
+        }
+        void ReHeapDown(const int &position)
+        {
+            if (position < 0)
+                return;
+            int left = position * 2 + 1;
+            int right = position * 2 + 2;
+            int smaller;
+            if (left <= cnt - 1)
+            {
+                if (right <= cnt - 1 && a_less_than_b(right, left))
+                {
+                    smaller = right;
+                }
+                else
+                    smaller = left;
+                if (a_less_than_b(smaller, position))
+                {
+                    swap(elements[smaller], elements[position]);
+                    ReHeapDown(smaller);
+                }
+            }
+        }
+        void insert(Table *&t)
+        {
+            int last = cnt;
+            cnt++;
+            elements[last] = t;
+            ReHeapUp(last);
+        }
+        void remove(Table *&t)
+        {
+            if (cnt == 0)
+                return;
+            int position = find(t);
+            if (position == -1)
+                return;
+            elements[position] = elements[cnt - 1];
+            cnt--;
+            ReHeapDown(position);
+            ReHeapUp(position);
+        }
+        MinHeap()
+        {
+            for (int i = 0; i < MAXSIZE; i++)
+            {
+                elements[i] = 0;
+            }
+            cnt = 0;
+        }
+        ~MinHeap() {}
+    };
+    // elements in restaurant
+    Table table[MAXSIZE + 1];
     int count1;      // count 1st area
     int count2;      // count 2nd area
     long long order; // numerical order of guests getting in restaurant
     map<int, Table *> area1;
     AVLtree area2;
-    queue<Table *> FIFO;
+    deque<Table *> FIFO;
     deque<Table *> LRCO;
-
+    MinHeap LFCO;
+    // internal function
     void InsertIntoArea2(int id)
     {
         if (count2 == MAXSIZE / 2)
@@ -448,8 +546,40 @@ private:
             count1++;
         }
     }
+    bool IsContainingGuest(const int &id, const int &result, const string &name)
+    {
+        if (id >= 1 && id <= MAXSIZE)
+        {
+            if (table[id].result != result)
+                return 0;
+            if (table[id].name != name)
+                return 0;
+            return 1;
+        }
+        return 0;
+    }
+    void EraseInArea(Table *guest)
+    {
+        if (guest->area == 1)
+        {
+            auto it = area1.begin();
+            for (; it != area1.end(); it++)
+                if (it->second == guest)
+                    break;
+            if (it == area1.end())
+            {
+                cout << "Tim trong area 1 khong thay\n";
+                system("pause");
+            }
+            else
+                area1.erase(it);
+        }
+        else
+            area2.remove(guest);
+    }
 
 public:
+    // external function
     Restaurant()
     {
         count1 = 0;
@@ -463,22 +593,62 @@ public:
             return table[id].IsEmpty;
         return 0;
     }
-    bool IsContainingGuest(const int &id, const int &result, const string &name)
-    {
-        if (id >= 1 && id <= MAXSIZE)
-        {
-            if (table[id].result != result)
-                return 0;
-            if (table[id].name != name)
-                return 0;
-            return 1;
-        }
-        return 0;
-    }
+
     int InsertGuest(const int &result, const string &name)
     {
         if (count1 + count2 == MAXSIZE)
         {
+            int opt = result % 3;
+            Table *temp = 0;
+            if (opt == 0)
+            {
+                temp = FIFO.front();
+                EraseInArea(temp);
+                FIFO.pop_front();
+                LRCO.erase(find(LRCO.begin(), LRCO.end(), temp));
+                LFCO.remove(temp);
+            }
+            else if (opt == 1)
+            {
+                temp = LRCO.front();
+                EraseInArea(temp);
+                LRCO.pop_front();
+                FIFO.erase(find(FIFO.begin(), FIFO.end(), temp));
+                LFCO.remove(temp);
+            }
+            else
+            {
+                temp = LFCO.elements[0];
+                EraseInArea(temp);
+                LFCO.remove(0);
+                FIFO.erase(find(FIFO.begin(), FIFO.end(), temp));
+                LRCO.erase(find(LRCO.begin(), LRCO.end(), temp));
+            }
+            // test
+            if (!temp)
+                system("pause");
+            // insert new guest
+            int id = temp - table;
+            table[id].name = name;
+            table[id].order = order;
+            order++;
+            table[id].result = result;
+            table[id].num = 1;
+            temp = &table[id];
+            FIFO.push_back(temp);
+            LRCO.push_back(temp);
+            LFCO.insert(temp);
+            if (table[id].area == 1)
+            {
+                count1--;
+                InsertIntoArea1(id);
+            }
+            else
+            {
+                count2--;
+                InsertIntoArea2(id);
+            }
+            return id;
         }
         else
         {
@@ -486,7 +656,7 @@ public:
             while (!table[id].IsEmpty)
             {
                 id++;
-                if (id > MAXSIZE)
+                if (id > MAXSIZE + 1)
                     id = 1;
             }
             table[id].IsEmpty = 0;
@@ -496,7 +666,9 @@ public:
             table[id].result = result;
             table[id].num = 1;
             Table *temp = &table[id];
-            FIFO.push(temp);
+            FIFO.push_back(temp);
+            LRCO.push_back(temp);
+            LFCO.insert(temp);
             if (result & 1)
             {
                 // result is odd --> area 1
@@ -504,12 +676,29 @@ public:
             }
             else
             {
+                // result is even --> area 2
                 InsertIntoArea2(id);
             }
             return id;
         }
-        return 0;
     }
+    void GuestOrderDish(const int &id, const string &name)
+    {
+        // test
+        if (table[id].name != name)
+            system("pause");
+        /* WHEN num ++
+        LRCO change
+        LFCO change*/
+        Table *temp = &table[id];
+        table[id].num++;
+        LRCO.erase(find(LRCO.begin(), LRCO.end(), temp));
+        LRCO.push_back(temp);
+        // LFCO.ReHeapDown(temp);
+        LFCO.remove(temp);
+        LFCO.insert(temp);
+    }
+    friend bool IsGuestInRestaurant(Restaurant &r, const string &name, unordered_map<string, pair<int, int>> &EncryptedName);
 };
 class HuffmanTree
 {
@@ -715,10 +904,11 @@ void simulate(string filename)
                     }
                     if (IsGuestInRestaurant(r, name, EncryptedName))
                     {
+                        r.GuestOrderDish(EncryptedName[name].second, name); // input: id, name --> return none
                     }
                     else
                     {
-                        int id = r.InsertGuest(EncryptedName[name].first, name); // return id
+                        int id = r.InsertGuest(EncryptedName[name].first, name); // input: result, name --> return id
                         EncryptedName[name].second = id;
                     }
                 }
