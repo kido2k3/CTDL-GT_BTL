@@ -7,9 +7,9 @@ using namespace std;
 #define PrintHT "PrintHT"
 #define PrintAVL "PrintAVL"
 #define PrintMH "PrintMH"
-#define RH -1
-#define EH 0
-#define LH 1
+#define RH 1
+#define EH 2
+#define LH 3
 class Restaurant
 {
 private:
@@ -82,7 +82,7 @@ private:
             {
                 // right of left
                 node *RightOfLeft = left->right;
-                if (!RightOfLeft->Balance)
+                if (RightOfLeft->Balance == EH)
                 {
                     root->Balance = EH;
                     left->Balance = EH;
@@ -97,7 +97,7 @@ private:
                     root->Balance = RH;
                     left->Balance = EH;
                 }
-                RightOfLeft = EH;
+                RightOfLeft->Balance = EH;
                 root->left = RotateLeft(root->left);
                 root = RotateRight(root);
             }
@@ -123,7 +123,7 @@ private:
                     root->Balance = EH;
                     right->Balance = RH;
                 }
-                else if (!LeftOfRight)
+                else if (LeftOfRight->Balance == EH)
                 {
                     root->Balance = EH;
                     right->Balance = EH;
@@ -157,7 +157,7 @@ private:
                     {
                         root = LeftBalance(root, taller);
                     }
-                    else if (!root->Balance)
+                    else if (root->Balance == EH)
                     {
                         root->Balance = LH;
                     }
@@ -179,7 +179,7 @@ private:
                         taller = 0;
                         root->Balance = EH;
                     }
-                    else if (!root->Balance)
+                    else if (root->Balance ==EH)
                     {
                         root->Balance = RH;
                     }
@@ -198,7 +198,7 @@ private:
             {
                 root->Balance = EH;
             }
-            else if (!root->Balance)
+            else if (root->Balance == EH)
             {
                 isShorter = 0;
                 root->Balance = RH;
@@ -214,7 +214,7 @@ private:
                         right->Balance = RH;
                         root->Balance = EH;
                     }
-                    else if (!LeftOfRight)
+                    else if (LeftOfRight->Balance == EH)
                     {
                         right->Balance = EH;
                         root->Balance = EH;
@@ -230,7 +230,7 @@ private:
                 }
                 else
                 {
-                    if (!right->Balance)
+                    if (right->Balance == EH)
                     {
                         root->Balance = RH;
                         right->Balance = LH;
@@ -252,7 +252,7 @@ private:
             {
                 root->Balance = EH;
             }
-            else if (!root->Balance)
+            else if (root->Balance == EH)
             {
                 isShorter = 0;
                 root->Balance = LH;
@@ -268,7 +268,7 @@ private:
                         left->Balance = LH;
                         root->Balance = EH;
                     }
-                    else if (!RightOfLeft)
+                    else if (RightOfLeft->Balance == EH)
                     {
                         left->Balance = EH;
                         root->Balance = EH;
@@ -284,7 +284,7 @@ private:
                 }
                 else
                 {
-                    if (!left->Balance)
+                    if (left->Balance ==EH)
                     {
                         root->Balance = LH;
                         left->Balance = RH;
@@ -405,6 +405,25 @@ private:
             bool isShorter = 0;
             this->root = remove(this->root, t, isSuccessful, isShorter);
         }
+        void printAVL(Table *table)
+        {
+            queue<node *> temp;
+            if (root)
+            {
+                temp.push(root);
+                while (temp.size())
+                {
+                    node *top = temp.front();
+                    temp.pop();
+                    if (top->left)
+                        temp.push(top->left);
+                    if (top->right)
+                        temp.push(top->right);
+                    int id = top->table - table;
+                    cout << id << '-' << top->table->result << '-' << top->table->num << endl;
+                }
+            }
+        }
     };
     class MinHeap
     {
@@ -490,6 +509,17 @@ private:
             cnt--;
             ReHeapDown(position);
             ReHeapUp(position);
+        }
+        void printMH(const int &num, Table *table)
+        {
+            if (num < 0 || num >= cnt)
+                return;
+            int left = num * 2 + 1;
+            int right = num * 2 + 2;
+            int id = elements[num] - table;
+            cout << id << '-' << elements[num]->num << endl;
+            printMH(left, table);
+            printMH(right, table);
         }
         MinHeap()
         {
@@ -698,6 +728,77 @@ public:
         // LFCO.ReHeapDown(temp);
         LFCO.remove(temp);
         LFCO.insert(temp);
+    }
+
+    void RemoveGuest(const int &id)
+    {
+        if (id < 1)
+        {
+            deque<Table *> temp;
+            while (FIFO.size())
+            {
+                Table *guest = FIFO.front();
+                if (guest->area == 2)
+                {
+                    FIFO.pop_front();
+                    temp.push_back(guest);
+                }
+                else
+                {
+                    int index = guest - table;
+                    RemoveGuest(index);
+                }
+            }
+            swap(temp, FIFO);
+        }
+        else if (id > MAXSIZE)
+        {
+            deque<Table *> temp;
+            while (FIFO.size())
+            {
+                Table *guest = FIFO.front();
+                if (guest->area == 1)
+                {
+                    FIFO.pop_front();
+                    temp.push_back(guest);
+                }
+                else
+                {
+                    int index = guest - table;
+                    RemoveGuest(index);
+                }
+            }
+            swap(temp, FIFO);
+        }
+        else if (!table[id].IsEmpty)
+        {
+            Table *temp = &table[id];
+            temp->IsEmpty = 1;
+            EraseInArea(temp);
+            if (temp->area == 1)
+                count1--;
+            else
+                count2--;
+            FIFO.erase(find(FIFO.begin(), FIFO.end(), temp));
+            LRCO.erase(find(LRCO.begin(), LRCO.end(), temp));
+            LFCO.remove(temp);
+        }
+    }
+    void printHT()
+    {
+        for (auto it = area1.begin(); it != area1.end(); it++)
+        {
+            int id = it->second - table;
+            cout << id << '-' << it->second->result << '-' << it->second->num << endl;
+        }
+    }
+    void printAVL()
+    {
+        area2.printAVL(&table[0]);
+    }
+    void printMH()
+    {
+        LFCO.printMH(0, &table[0]);
     }
     friend bool IsGuestInRestaurant(Restaurant &r, const string &name, unordered_map<string, pair<int, int>> &EncryptedName);
 };
@@ -915,15 +1016,25 @@ void simulate(string filename)
                 }
                 else if (ins == CLE)
                 {
+                    r.RemoveGuest(num);
                 }
                 else if (ins == PrintAVL)
                 {
+                    // test
+                    // cout << "AVL\n";
+                    r.printAVL();
                 }
                 else if (ins == PrintHT)
                 {
+                    // test
+                    // cout << "HashTable\n";
+                    r.printHT();
                 }
                 else if (ins == PrintMH)
                 {
+                    // test
+                    // cout << "MinHeap\n";
+                    r.printMH();
                 }
             }
         }
