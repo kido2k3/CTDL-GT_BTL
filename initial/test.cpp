@@ -147,7 +147,7 @@ private:
                 taller = 1;
                 return new node(t);
             }
-            if (root->table->result < t->result)
+            if (root->table->result > t->result)
             {
                 root->left = insert(root->left, t, taller);
                 if (taller)
@@ -656,9 +656,10 @@ public:
             while (!table[id].IsEmpty)
             {
                 id++;
-                if (id > MAXSIZE + 1)
+                if (id == MAXSIZE + 1)
                     id = 1;
             }
+
             table[id].IsEmpty = 0;
             table[id].name = name;
             table[id].order = order;
