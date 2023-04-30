@@ -179,7 +179,7 @@ private:
                         taller = 0;
                         root->Balance = EH;
                     }
-                    else if (root->Balance ==EH)
+                    else if (root->Balance == EH)
                     {
                         root->Balance = RH;
                     }
@@ -284,7 +284,7 @@ private:
                 }
                 else
                 {
-                    if (left->Balance ==EH)
+                    if (left->Balance == EH)
                     {
                         root->Balance = LH;
                         left->Balance = RH;
@@ -807,9 +807,10 @@ class HuffmanTree
 private:
     class Node;
     Node *root;
+    long long order;
 
 public:
-    HuffmanTree() : root(0) {}
+    HuffmanTree() : root(0), order(0) {}
     ~HuffmanTree()
     {
         destruct(this->root);
@@ -822,7 +823,8 @@ public:
         // Create priority queue
         for (auto it = m1.begin(); it != m1.end(); it++)
         {
-            pq.push(new Node(it->first, it->second));
+            pq.push(new Node(it->first, it->second, order));
+            order++;
         }
         while (pq.size() != 1)
         {
@@ -830,7 +832,8 @@ public:
             pq.pop();
             right = pq.top();
             pq.pop();
-            top = new Node('|', left->freq + right->freq, left, right);
+            top = new Node('|', left->freq + right->freq, order, left, right);
+            order++;
             pq.push(top);
         }
         this->root = pq.top();
@@ -867,10 +870,13 @@ private:
         unsigned freq;
         // Left and right child
         Node *left, *right;
-        Node(char data = '|', unsigned freq = 0, Node *left = 0, Node *right = 0)
+        // order get in queue
+        long long order;
+        Node(char data = '|', unsigned freq = 0, long long order = 0, Node *left = 0, Node *right = 0)
         {
             this->left = left;
             this->right = right;
+            this->order = order;
             this->data = data;
             this->freq = freq;
         }
@@ -884,7 +890,13 @@ private:
         bool operator()(Node *l, Node *r)
         {
             if (l->freq == r->freq)
-                return l->data >= r->data;
+            {
+                if (l->data == r->data)
+                    return l->order > r->order;
+
+                else
+                    return l->data > r->data;
+            }
             return (l->freq > r->freq);
         }
     };
