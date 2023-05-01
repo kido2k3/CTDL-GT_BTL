@@ -1025,7 +1025,6 @@ void PrintRestaurant(const string &line, Restaurant &r)
     r.area2.printBinaryTree();
     cout << "-----------------\n";
 }
-int a, b, c;
 void simulate(string filename)
 {
     ifstream filein(filename, ios::in);
@@ -1082,20 +1081,14 @@ void simulate(string filename)
                 }
                 else if (ins == PrintAVL)
                 {
-                    // test
-                    cout << "AVL: " << ++a << endl;
                     r.printAVL();
                 }
                 else if (ins == PrintHT)
                 {
-                    // test
-                    cout << "HashTable: " << ++b << endl;
                     r.printHT();
                 }
                 else if (ins == PrintMH)
                 {
-                    // test
-                    cout << "MinHeap: " << ++c << endl;
                     r.printMH();
                 }
                 // PrintRestaurant(line, r);
