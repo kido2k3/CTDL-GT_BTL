@@ -35,7 +35,7 @@ private:
     };
     class AVLtree
     {
-    private:
+    public:
         class node;
         node *root;
         class node
@@ -76,7 +76,6 @@ private:
                 root->Balance = EH;
                 left->Balance = EH;
                 root = RotateRight(root);
-                taller = 0;
             }
             else
             {
@@ -101,6 +100,7 @@ private:
                 root->left = RotateLeft(root->left);
                 root = RotateRight(root);
             }
+            taller = 0;
             return root;
         }
         node *RightBalance(node *root, bool &taller)
@@ -112,7 +112,6 @@ private:
                 root->Balance = EH;
                 right->Balance = EH;
                 root = RotateLeft(root);
-                taller = 0;
             }
             else
             {
@@ -136,8 +135,8 @@ private:
                 LeftOfRight->Balance = EH;
                 root->right = RotateRight(right);
                 root = RotateLeft(root);
-                taller = 0;
             }
+            taller = 0;
             return root;
         }
         node *insert(node *root, Table *t, bool &taller)
@@ -385,7 +384,6 @@ private:
             delete root;
         }
 
-    public:
         AVLtree()
         {
             root = 0;
@@ -424,10 +422,31 @@ private:
                 }
             }
         }
+        void printBinaryTree(string prefix, node *root, bool isLeft, bool hasRightSibling)
+        {
+            if (!root && isLeft && hasRightSibling)
+            {
+                cout << prefix << char(195) << char(196) << endl;
+            }
+            if (!root)
+                return;
+            cout << prefix;
+            if (isLeft && hasRightSibling)
+                cout << char(195) << char(196);
+            else
+                cout << char(192) << char(196);
+            cout << root->table->result << '\n';
+            printBinaryTree(prefix + (isLeft && hasRightSibling ? "|  " : "   "), root->left, true, root->right);
+            printBinaryTree(prefix + (isLeft && hasRightSibling ? "|  " : "   "), root->right, false, root->right);
+        }
+        void printBinaryTree()
+        {
+            printBinaryTree("", root, false, false);
+        }
     };
     class MinHeap
     {
-    protected:
+    public:
         Table *elements[MAXSIZE];
         int cnt;
         inline bool a_less_than_b(const int &a, const int &b)
@@ -435,8 +454,6 @@ private:
             return elements[a]->num < elements[b]->num || elements[a]->num == elements[b]->num && elements[a]->order < elements[b]->order;
         }
         friend class Restaurant;
-
-    public:
         void remove(const int &position)
         {
             if (cnt == 0)
@@ -801,6 +818,7 @@ public:
         LFCO.printMH(0, &table[0]);
     }
     friend bool IsGuestInRestaurant(Restaurant &r, const string &name, unordered_map<string, pair<int, int>> &EncryptedName);
+    friend void PrintRestaurant(const string &line, Restaurant &r);
 };
 class HuffmanTree
 {
@@ -976,6 +994,38 @@ void PrintMap(const map<T1, T2> &m)
     for (auto it = m.begin(); it != m.end(); it++)
         cout << it->first << ": " << it->second << endl;
 }
+
+void PrintRestaurant(const string &line, Restaurant &r)
+{
+    cout << line << '\n';
+    cout << "---------------\n\n";
+    cout << "khu vuc 1: " << r.count1 << endl;
+    cout << "khu vuc 2: " << r.count2 << endl;
+    cout << "FIFO: result-id-num-name\n\n";
+    for (unsigned i = 0; i < r.FIFO.size(); i++)
+    {
+        cout << r.FIFO.at(i)->result << '-' << (r.FIFO.at(i) - r.table) << '-' << r.FIFO.at(i)->num << '-' << r.FIFO.at(i)->name << endl;
+    }
+    cout << "LRCO: result-id-num-name\n\n";
+    for (unsigned i = 0; i < r.LRCO.size(); i++)
+    {
+        cout << r.LRCO.at(i)->result << '-' << (r.LRCO.at(i) - r.table) << '-' << r.LRCO.at(i)->num << '-' << r.LRCO.at(i)->name << endl;
+    }
+    cout << "LFCO: result-id-num-name\n\n";
+    for (int i = 0; i < r.LFCO.cnt; i++)
+    {
+        cout << i << ": " << r.LFCO.elements[i]->result << '-' << r.LFCO.elements[i] - r.table << '-' << r.LFCO.elements[i]->num << '-' << r.LFCO.elements[i]->name << endl;
+    }
+    cout << "Map: key-result-id-num-name\n\n";
+    for (auto it = r.area1.begin(); it != r.area1.end(); it++)
+    {
+        cout << it->first << '-' << it->second->result << '-' << it->second - r.table << '-' << it->second->num << '-' << it->second->name << endl;
+    }
+    cout << "AVL:\n\n";
+    r.area2.printBinaryTree();
+    cout << "-----------------\n";
+}
+int a, b, c;
 void simulate(string filename)
 {
     ifstream filein(filename, ios::in);
@@ -1033,21 +1083,22 @@ void simulate(string filename)
                 else if (ins == PrintAVL)
                 {
                     // test
-                    // cout << "AVL\n";
+                    cout << "AVL: " << ++a << endl;
                     r.printAVL();
                 }
                 else if (ins == PrintHT)
                 {
                     // test
-                    // cout << "HashTable\n";
+                    cout << "HashTable: " << ++b << endl;
                     r.printHT();
                 }
                 else if (ins == PrintMH)
                 {
                     // test
-                    // cout << "MinHeap\n";
+                    cout << "MinHeap: " << ++c << endl;
                     r.printMH();
                 }
+                // PrintRestaurant(line, r);
             }
         }
         filein.close();
