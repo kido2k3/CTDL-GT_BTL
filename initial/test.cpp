@@ -1025,6 +1025,7 @@ void PrintRestaurant(const string &line, Restaurant &r)
     r.area2.printBinaryTree();
     cout << "-----------------\n";
 }
+int a, b, c;
 void simulate(string filename)
 {
     ifstream filein(filename, ios::in);
