@@ -947,22 +947,34 @@ bool CheckIns(const string &line, string &ins, string &name, int &num)
     {
         name = line.substr(FirstSpace + 1);
         // have not checked name yet
+        if (name == "")
+            return 0;
         for (char i : name)
-        {
-            if (i < 'A' || i > 'Z' && i < 'a' || i > 'z')
+            if ((i < 'A' || i > 'Z') && (i < 'a' || i > 'z'))
                 return 0;
-        }
         //
         return 1;
     }
     else if (ins == CLE)
     {
         string temp = line.substr(FirstSpace + 1);
-        for (char i : temp)
+        if (temp == "")
+            return 0;
+        if (temp[0] == '-')
         {
-            if (i < '0' || i > '9' || i != '-')
-                return 0;
+            for (unsigned i = 1; i < temp.size(); i++)
+                if (temp[i] < '0' || temp[i] > '9')
+                    return 0;
         }
+        else
+        {
+            for (char i : temp)
+            {
+                if (i < '0' || i > '9')
+                    return 0;
+            }
+        }
+
         num = stoi(temp);
         return 1;
     }
@@ -1057,44 +1069,40 @@ void simulate(string filename)
             {
                 if (ins == REG)
                 {
-                    if (name != "")
+                    if (EncryptedName.find(name) == EncryptedName.end())
                     {
-                        if (EncryptedName.find(name) == EncryptedName.end())
                         {
-
                             map<char, int> m1;
                             map<char, string> m2;
                             for (char i : name)
                             {
                                 m1[i]++; // create map with key (charater), data (frequency)
                             }
-                            if (m1.size() == 1)
-                            {
-                                string temp(name);
-                                for (unsigned i = 0; i < temp.size(); i++)
-                                {
-                                    temp[i] = '1';
-                                }
-                                int result = stoi(temp, 0, 2);
-                                EncryptedName[name].first = result;
-                            }
-                            else
+                            if (m1.size() > 1)
                             {
                                 HuffmanTree ht;
                                 ht.BuildTree(m1, m2);
                                 int result = EncryptingName(name, m2);
                                 EncryptedName[name].first = result;
                             }
+                            else
+                            {
+                                string temp(name);
+                                for (unsigned i = 0; i < temp.size(); i++)
+                                    temp[i] = '1';
+                                int result = stoi(temp, 0, 2);
+                                EncryptedName[name].first = result;
+                            }
                         }
-                        if (IsGuestInRestaurant(r, name, EncryptedName))
-                        {
-                            r.GuestOrderDish(EncryptedName[name].second, name); // input: id, name --> return none
-                        }
-                        else
-                        {
-                            int id = r.InsertGuest(EncryptedName[name].first, name); // input: result, name --> return id
-                            EncryptedName[name].second = id;
-                        }
+                    }
+                    if (IsGuestInRestaurant(r, name, EncryptedName))
+                    {
+                        r.GuestOrderDish(EncryptedName[name].second, name); // input: id, name --> return none
+                    }
+                    else
+                    {
+                        int id = r.InsertGuest(EncryptedName[name].first, name); // input: result, name --> return id
+                        EncryptedName[name].second = id;
                     }
                 }
                 else if (ins == CLE)
