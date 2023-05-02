@@ -947,12 +947,23 @@ bool CheckIns(const string &line, string &ins, string &name, int &num)
     {
         name = line.substr(FirstSpace + 1);
         // have not checked name yet
+        for (char i : name)
+        {
+            if (i < 'A' || i > 'Z' && i < 'a' || i > 'z')
+                return 0;
+        }
         //
         return 1;
     }
     else if (ins == CLE)
     {
-        num = stoi(line.substr(FirstSpace + 1));
+        string temp = line.substr(FirstSpace + 1);
+        for (char i : temp)
+        {
+            if (i < '0' || i > '9' || i != '-')
+                return 0;
+        }
+        num = stoi(temp);
         return 1;
     }
     return 0;
