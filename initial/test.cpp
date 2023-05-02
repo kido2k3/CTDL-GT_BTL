@@ -1046,34 +1046,44 @@ void simulate(string filename)
             {
                 if (ins == REG)
                 {
-                    if (EncryptedName.find(name) == EncryptedName.end())
+                    if (name != "")
                     {
-                        if (name.size() == 1)
+                        if (EncryptedName.find(name) == EncryptedName.end())
                         {
-                            EncryptedName[name].first = 1;
-                        }
-                        else
-                        {
+
                             map<char, int> m1;
                             map<char, string> m2;
                             for (char i : name)
                             {
                                 m1[i]++; // create map with key (charater), data (frequency)
                             }
-                            HuffmanTree ht;
-                            ht.BuildTree(m1, m2);
-                            int result = EncryptingName(name, m2);
-                            EncryptedName[name].first = result;
+                            if (m1.size() == 1)
+                            {
+                                string temp(name);
+                                for (unsigned i = 0; i < temp.size(); i++)
+                                {
+                                    temp[i] = '1';
+                                }
+                                int result = stoi(temp, 0, 2);
+                                EncryptedName[name].first = result;
+                            }
+                            else
+                            {
+                                HuffmanTree ht;
+                                ht.BuildTree(m1, m2);
+                                int result = EncryptingName(name, m2);
+                                EncryptedName[name].first = result;
+                            }
                         }
-                    }
-                    if (IsGuestInRestaurant(r, name, EncryptedName))
-                    {
-                        r.GuestOrderDish(EncryptedName[name].second, name); // input: id, name --> return none
-                    }
-                    else
-                    {
-                        int id = r.InsertGuest(EncryptedName[name].first, name); // input: result, name --> return id
-                        EncryptedName[name].second = id;
+                        if (IsGuestInRestaurant(r, name, EncryptedName))
+                        {
+                            r.GuestOrderDish(EncryptedName[name].second, name); // input: id, name --> return none
+                        }
+                        else
+                        {
+                            int id = r.InsertGuest(EncryptedName[name].first, name); // input: result, name --> return id
+                            EncryptedName[name].second = id;
+                        }
                     }
                 }
                 else if (ins == CLE)
